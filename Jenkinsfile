@@ -21,7 +21,7 @@ podTemplate(yaml: '''
       volumes:
       - name: kaniko-secret
         secret:
-          secretName: dockerhub-dockercred
+          secretName: github-dockercred
           items:
           - key: .dockerconfigjson
             path: config.json
@@ -29,6 +29,8 @@ podTemplate(yaml: '''
   node(POD_LABEL) {
     TreeMap scmData
     String gitCommitMessage
+    String imageFrom = "alpine:3.20.3"
+    String version = imageFrom.split(":")[1]
     stage('checkout SCM') {  
       scmData = checkout scm
       gitCommitMessage = sh(returnStdout: true, script: "git log --format=%B -n 1 ${scmData.GIT_COMMIT}").trim()
@@ -51,14 +53,14 @@ podTemplate(yaml: '''
       stage('Build Docker Image') {
         container('kaniko') {
           def properties = readProperties file: 'package.env'
-          withEnv(["GIT_COMMIT=${scmData.GIT_COMMIT}", "PACKAGE_NAME=${properties.PACKAGE_NAME}", "PACKAGE_DESTINATION=${properties.PACKAGE_DESTINATION}", "PACKAGE_CONTAINER_SOURCE=${properties.PACKAGE_CONTAINER_SOURCE}", "GIT_BRANCH=${BRANCH_NAME}", "ARCH=${arch}"]) {
+          withEnv(["GIT_COMMIT=${scmData.GIT_COMMIT}", "PACKAGE_NAME=${properties.PACKAGE_NAME}", "PACKAGE_DESTINATION=${properties.PACKAGE_DESTINATION}", "PACKAGE_CONTAINER_SOURCE=${properties.PACKAGE_CONTAINER_SOURCE}", "GIT_BRANCH=${BRANCH_NAME}", "ARCH=${arch}", "IMAGE_FROM=${imageFrom}", "IMAGE_VERSION=${version}"]) {
             if (isMainBranch()){
               sh '''
-                /kaniko/executor --force --context `pwd` --log-format text --destination $PACKAGE_DESTINATION/$PACKAGE_NAME:$BRANCH_NAME-$ARCH --destination $PACKAGE_DESTINATION/$PACKAGE_NAME:latest --label org.opencontainers.image.description="Build based on $PACKAGE_CONTAINER_SOURCE/commit/$GIT_COMMIT" --label org.opencontainers.image.revision=$GIT_COMMIT --label org.opencontainers.image.version=$GIT_BRANCH
+                /kaniko/executor --force --context `pwd` --log-format text --destination $PACKAGE_DESTINATION/$PACKAGE_NAME:$BRANCH_NAME-$ARCH --destination $PACKAGE_DESTINATION/$PACKAGE_NAME:$IMAGE_VERSION --destination $PACKAGE_DESTINATION/$PACKAGE_NAME:latest --build-arg "IMAGE_FROM=$IMAGE_FROM" --label org.opencontainers.image.description="Build based on $PACKAGE_CONTAINER_SOURCE/commit/$GIT_COMMIT" --label org.opencontainers.image.revision=$GIT_COMMIT --label org.opencontainers.image.version=$GIT_BRANCH
               '''
             } else {
               sh '''
-                /kaniko/executor --force --context `pwd` --log-format text --destination $PACKAGE_DESTINATION/$PACKAGE_NAME:$BRANCH_NAME-$ARCH --label org.opencontainers.image.description="Build based on $PACKAGE_CONTAINER_SOURCE/commit/$GIT_COMMIT" --label org.opencontainers.image.revision=$GIT_COMMIT --label org.opencontainers.image.version=$GIT_BRANCH
+                /kaniko/executor --force --context `pwd` --log-format text --destination $PACKAGE_DESTINATION/$PACKAGE_NAME:$BRANCH_NAME-$ARCH --build-arg "IMAGE_FROM=$IMAGE_FROM" --label org.opencontainers.image.description="Build based on $PACKAGE_CONTAINER_SOURCE/commit/$GIT_COMMIT" --label org.opencontainers.image.revision=$GIT_COMMIT --label org.opencontainers.image.version=$GIT_BRANCH
               '''
             }
           }
