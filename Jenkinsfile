@@ -45,8 +45,8 @@ podTemplate(yaml: '''
           i686) echo "386";;
           i386) echo "386";;
         esac''').trim()
-      gitMap = scmGetOrgRepo scmData.GIT_URL
-      githubWebhookManager gitMap: gitMap, webhookTokenId: 'jenkins-webhook-repo-cleanup'
+//      gitMap = scmGetOrgRepo scmData.GIT_URL
+//      githubWebhookManager gitMap: gitMap, webhookTokenId: 'jenkins-webhook-repo-cleanup'
       // Some comment
     }
     if ( !gitCommitMessage.startsWith("renovate/") || ! gitCommitMessage.startsWith("WIP") ) {
