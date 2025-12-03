@@ -29,7 +29,7 @@ podTemplate(yaml: '''
   node(POD_LABEL) {
     TreeMap scmData
     String gitCommitMessage
-    String imageFrom = "alpine:3.22.2"
+    String imageFrom = "alpine:3.23.0"
     String version = imageFrom.split(":")[1]
     stage('checkout SCM') {  
       scmData = checkout scm
