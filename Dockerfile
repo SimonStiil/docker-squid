@@ -1,4 +1,4 @@
-ARG IMAGE_FROM=alpine:3.23.3
+ARG IMAGE_FROM=alpine:3.23.4
 FROM $IMAGE_FROM
 
 ENV SQUID_CACHE_DIR=/var/spool/squid \
